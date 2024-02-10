@@ -1,5 +1,6 @@
 # This is a sample Python script.
 import math
+import numpy as np
 
 
 # Press Shift+F10 to execute it or replace it with your code.
@@ -10,14 +11,14 @@ def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
-    B = 4096
+    B = 8192*2
     P = 24
     n = 1000000
-    n_U = 1500000
+    n_U = 2000000/6*5
     rho = [2**(-min(j,P-1))/B for j in range(P)]
     gamma= [1-rho[j] for j in range(P)]
 
-    eps = 1
+    eps = 2
     p = math.e**eps/(math.e**eps + 1)
     q = 1 - p
 
@@ -41,16 +42,37 @@ def print_hi(name):
 
     # For comparison, we assume the same communication, assuming hash outputs are 64 bits.
     k = B*P /64
-    JI = (n_U-n)/n_U
+    JI = (2*n- n_U)/n_U
+
+    print("JI:",JI)
 
     JI_SD = (k*JI*(1-JI))**(1/2)/k
 
-    print("# of iterations k:{}, JI:{}, estimated_JI_SD:{}".format(k,JI, JI_SD))
+    print("# of iterations k:{}, JI:{}, estimated_JI_SD:{}, relative JI error:{}".format(k,JI, JI_SD,JI_SD/JI))
 
+    # n_U = 2n/(JI+1)
 
+    num_samples = 1000
 
+    # Sampling from the binomial distribution
+    samples_matching = np.random.binomial(k, JI, num_samples)
 
+    samples_JI = [val / k  for val in samples_matching]
 
+    RRMSE_JI = (np.mean([(val-JI)**2 for val in samples_JI]))**(1/2)/JI
+
+    samples_Union = [2*n/(val/k+1) for val in samples_matching]
+
+    union_se = (np.mean([(val-n_U)**2 for val in samples_Union]))**(1/2)
+
+    RRMSE_U = union_se/n_U
+
+    # print(samples_matching)
+    # print(samples_Union)
+    print("Experimental relative error (JI):{}".format(RRMSE_JI))
+    print("Experimental relative error (Union):{}".format(RRMSE_U))
+
+    # Estimated relative standard error.
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
